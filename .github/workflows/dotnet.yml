@@ -1,4 +1,4 @@
-name: .NET CI + Docker
+name: .NET CI + Docker + Push
 
 on:
   push:
@@ -6,6 +6,7 @@ on:
 
 permissions:
   contents: read
+  packages: write
 
 jobs:
   build:
@@ -15,19 +16,11 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v3
-      with:
-        dotnet-version: 8.0.x
-
-    - name: Restore
-      run: dotnet restore
-
-    - name: Build
-      run: dotnet build --no-restore
-
-    - name: Publish
-      run: dotnet publish -c Release -o publish
+    - name: Log in to GitHub Container Registry
+      run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
     - name: Build Docker Image
-      run: docker build -t secureapi:latest .
+      run: docker build -t ghcr.io/${{ github.repository }}/secureapi:latest .
+
+    - name: Push Docker Image
+      run: docker push ghcr.io/${{ github.repository }}/secureapi:latest
